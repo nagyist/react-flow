@@ -22,6 +22,7 @@ export type FlowRendererProps<NodeType extends Node = Node> = Omit<
   | 'selectNodesOnDrag'
   | 'defaultMarkerColor'
   | 'rfId'
+  | 'nodeClickDistance'
 > & {
   isControlledViewport: boolean;
   children: ReactNode;
@@ -41,6 +42,7 @@ function FlowRendererComponent<NodeType extends Node = Node>({
   onPaneMouseLeave,
   onPaneContextMenu,
   onPaneScroll,
+  paneClickDistance,
   deleteKeyCode,
   selectionKeyCode,
   selectionOnDrag,
@@ -76,7 +78,8 @@ function FlowRendererComponent<NodeType extends Node = Node>({
 
   const panOnDrag = panActivationKeyPressed || _panOnDrag;
   const panOnScroll = panActivationKeyPressed || _panOnScroll;
-  const isSelecting = selectionKeyPressed || userSelectionActive || (selectionOnDrag && panOnDrag !== true);
+  const _selectionOnDrag = selectionOnDrag && panOnDrag !== true;
+  const isSelecting = selectionKeyPressed || userSelectionActive || _selectionOnDrag;
 
   useGlobalKeyHandler({ deleteKeyCode, multiSelectionKeyCode });
 
@@ -101,6 +104,7 @@ function FlowRendererComponent<NodeType extends Node = Node>({
       noPanClassName={noPanClassName}
       onViewportChange={onViewportChange}
       isControlledViewport={isControlledViewport}
+      paneClickDistance={paneClickDistance}
     >
       <Pane
         onSelectionStart={onSelectionStart}
@@ -115,6 +119,7 @@ function FlowRendererComponent<NodeType extends Node = Node>({
         isSelecting={!!isSelecting}
         selectionMode={selectionMode}
         selectionKeyPressed={selectionKeyPressed}
+        selectionOnDrag={_selectionOnDrag}
       >
         {children}
         {nodesSelectionActive && (

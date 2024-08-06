@@ -1,5 +1,47 @@
 # @xyflow/svelte
 
+## 0.1.14
+
+### Patch Changes
+
+- [#4498](https://github.com/xyflow/xyflow/pull/4498) [`7a6e9e30`](https://github.com/xyflow/xyflow/commit/7a6e9e3091c8ee0aedbf8ae6e5c4ee08485417ab) Thanks [@peterkogo](https://github.com/peterkogo)! - fix(pane) only capture pointer after a valid selection has started, fixes #4492
+
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies [[`543c0939`](https://github.com/xyflow/xyflow/commit/543c09392d53fdd56a8876e65f4ce2d8ab250098), [`89cd677b`](https://github.com/xyflow/xyflow/commit/89cd677b5668b78434e02e7b025c6ac58db91e58), [`c253c7c5`](https://github.com/xyflow/xyflow/commit/c253c7c59a2ccd2cb91ad44ce4acbe481d9d7fe1)]:
+  - @xyflow/system@0.0.37
+
+## 0.1.12
+
+### Patch Changes
+
+- [#4446](https://github.com/xyflow/xyflow/pull/4446) [`80baf53b`](https://github.com/xyflow/xyflow/commit/80baf53bdc7d4fb0715e5eed85efdea77191935a) Thanks [@moklick](https://github.com/moklick)! - fix(resizer): export types
+
+- [#4451](https://github.com/xyflow/xyflow/pull/4451) [`4cccd06a`](https://github.com/xyflow/xyflow/commit/4cccd06a671e9ef1c6f16ab0d788081f8d894d0e) Thanks [@moklick](https://github.com/moklick)! - add nodeClickDistance
+
+- Updated dependencies [[`80baf53b`](https://github.com/xyflow/xyflow/commit/80baf53bdc7d4fb0715e5eed85efdea77191935a), [`4cccd06a`](https://github.com/xyflow/xyflow/commit/4cccd06a671e9ef1c6f16ab0d788081f8d894d0e)]:
+  - @xyflow/system@0.0.36
+
+## 0.1.11
+
+### Patch Changes
+
+- [#4434](https://github.com/xyflow/xyflow/pull/4434) [`1bda2451`](https://github.com/xyflow/xyflow/commit/1bda24519658b4aaed6d4abf9e7e9d096e193b5b) Thanks [@moklick](https://github.com/moklick)! - fix(selection): handle pointer capture for selectionOnDrag
+
+- Updated dependencies [[`d2da5765`](https://github.com/xyflow/xyflow/commit/d2da576591305873f8d6514091ee8db1ad4f79e2)]:
+  - @xyflow/system@0.0.35
+
+## 0.1.10
+
+- add `paneDistanceClick` prop (max distance between mousedown/up that will trigger a click)
+- returned nodes in `on:nodedragstop` are set to `dragging=false`
+
+## 0.1.9
+
+- return Promises for `setViewport`, `fitView`, `fitBounds` and `zoomTo` to be able to await viewport update
+
 ## 0.1.8
 
 - `useConnection` returns `ConnectionState` with `toNode` and `toHandle`
@@ -10,7 +52,7 @@
 
 - revise selection usability (capture while dragging out of the flow)
 - only prevent shift scrolling when selection is actually in progress
-- use correct end handle position when drawing a connection lines 
+- use correct end handle position when drawing a connection lines
 - determine correct end positions for connection lines
 
 ## 0.1.6

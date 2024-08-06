@@ -35,6 +35,7 @@ export type OnPointerDownParams = {
   onReconnectEnd?: (evt: MouseEvent | TouchEvent) => void;
   getTransform: () => Transform;
   getFromHandle: () => Handle | null;
+  autoPanSpeed?: number;
 };
 
 export type IsValidParams = {
@@ -47,7 +48,7 @@ export type IsValidParams = {
   doc: Document | ShadowRoot;
   lib: string;
   flowId: string | null;
-  handleLookup?: Handle[];
+  handleLookup?: Map<string, Handle>;
 };
 
 export type XYHandleInstance = {

@@ -44,6 +44,7 @@ function onPointerDown(
     updateConnection,
     getTransform,
     getFromHandle,
+    autoPanSpeed,
   }: OnPointerDownParams
 ) {
   // when xyflow is used inside a shadow root we can't use document
@@ -78,7 +79,7 @@ function onPointerDown(
     if (!autoPanOnConnect || !containerBounds) {
       return;
     }
-    const [x, y] = calcAutoPan(position, containerBounds);
+    const [x, y] = calcAutoPan(position, containerBounds, autoPanSpeed);
 
     panBy({ x, y });
     autoPanId = requestAnimationFrame(autoPan);
@@ -103,7 +104,7 @@ function onPointerDown(
     from,
     fromHandle,
     fromPosition: fromHandle.position,
-    fromNode: fromNodeInternal.internals.userNode,
+    fromNode: fromNodeInternal,
 
     to: position,
     toHandle: null,
@@ -162,7 +163,7 @@ function onPointerDown(
           : position,
       toHandle: result.toHandle,
       toPosition: isValid && result.toHandle ? result.toHandle.position : oppositePosition[fromHandle.position],
-      toNode: result.toHandle ? nodeLookup.get(result.toHandle.nodeId)!.internals.userNode : null,
+      toNode: result.toHandle ? nodeLookup.get(result.toHandle.nodeId)! : null,
     };
 
     // we don't want to trigger an update when the connection
@@ -281,16 +282,12 @@ function isValidHandle(
 
     result.isValid = isValid && isValidConnection(connection);
 
-    if (handleLookup) {
-      const toHandle = handleLookup.find(
-        (h) => h.id === handleId && h.nodeId === handleNodeId && h.type === handleType
-      );
+    const toHandle = handleLookup?.get(`${handleNodeId}-${handleType}-${handleId}`);
 
-      if (toHandle) {
-        result.toHandle = {
-          ...toHandle,
-        };
-      }
+    if (toHandle) {
+      result.toHandle = {
+        ...toHandle,
+      };
     }
   }
 

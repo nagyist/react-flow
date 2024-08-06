@@ -35,6 +35,7 @@ type PaneProps = {
     | 'onPaneMouseEnter'
     | 'onPaneMouseMove'
     | 'onPaneMouseLeave'
+    | 'selectionOnDrag'
   >
 >;
 
@@ -61,6 +62,7 @@ export function Pane({
   selectionKeyPressed,
   selectionMode = SelectionMode.Full,
   panOnDrag,
+  selectionOnDrag,
   onSelectionStart,
   onSelectionEnd,
   onPaneClick,
@@ -83,6 +85,7 @@ export function Pane({
 
   // Used to prevent click events when the user lets go of the selectionKey during a selection
   const selectionInProgress = useRef<boolean>(false);
+  const selectionStarted = useRef<boolean>(false);
 
   const resetUserSelection = () => {
     store.setState({ userSelectionActive: false, userSelectionRect: null });
@@ -117,7 +120,6 @@ export function Pane({
   const onPointerDown = (event: ReactPointerEvent): void => {
     const { resetSelectedElements, domNode, edgeLookup } = store.getState();
     containerBounds.current = domNode?.getBoundingClientRect();
-    container.current?.setPointerCapture(event.pointerId);
 
     if (
       !elementsSelectable ||
@@ -129,6 +131,10 @@ export function Pane({
       return;
     }
 
+    (event.target as Element)?.setPointerCapture?.(event.pointerId);
+
+    selectionStarted.current = true;
+    selectionInProgress.current = false;
     edgeIdLookup.current = new Map();
 
     for (const [id, edge] of edgeLookup) {
@@ -219,10 +225,11 @@ export function Pane({
   };
 
   const onPointerUp = (event: ReactPointerEvent) => {
-    if (event.button !== 0) {
+    if (event.button !== 0 || !selectionStarted.current) {
       return;
     }
-    container.current?.releasePointerCapture(event.pointerId);
+
+    (event.target as Element)?.releasePointerCapture?.(event.pointerId);
     const { userSelectionRect } = store.getState();
     // We only want to trigger click functions when in selection mode if
     // the user did not move the mouse.
@@ -230,16 +237,20 @@ export function Pane({
       onClick?.(event);
     }
 
-    store.setState({ nodesSelectionActive: prevSelectedNodesCount.current > 0 });
+    if (prevSelectedNodesCount.current > 0) {
+      store.setState({ nodesSelectionActive: true });
+    }
 
     resetUserSelection();
     onSelectionEnd?.(event);
 
     // If the user kept holding the selectionKey during the selection,
     // we need to reset the selectionInProgress, so the next click event is not prevented
-    if (selectionKeyPressed) {
+    if (selectionKeyPressed || selectionOnDrag) {
       selectionInProgress.current = false;
     }
+
+    selectionStarted.current = false;
   };
 
   return (

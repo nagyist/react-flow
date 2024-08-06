@@ -1,5 +1,96 @@
 # @xyflow/react
 
+## 12.0.4
+
+### Patch Changes
+
+- [#4480](https://github.com/xyflow/xyflow/pull/4480) [`aae526f4`](https://github.com/xyflow/xyflow/commit/aae526f4ce0818e8ab5ee9f44dd7ce4b70eb4cf9) Thanks [@peterkogo](https://github.com/peterkogo)! - fix(dragging) nodeExtent breaks dragging nodes in subflows
+
+- [#4498](https://github.com/xyflow/xyflow/pull/4498) [`7a6e9e30`](https://github.com/xyflow/xyflow/commit/7a6e9e3091c8ee0aedbf8ae6e5c4ee08485417ab) Thanks [@peterkogo](https://github.com/peterkogo)! - fix(pane) only capture pointer after a valid selection has started, fixes #4492
+
+## 12.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`543c0939`](https://github.com/xyflow/xyflow/commit/543c09392d53fdd56a8876e65f4ce2d8ab250098), [`89cd677b`](https://github.com/xyflow/xyflow/commit/89cd677b5668b78434e02e7b025c6ac58db91e58), [`c253c7c5`](https://github.com/xyflow/xyflow/commit/c253c7c59a2ccd2cb91ad44ce4acbe481d9d7fe1)]:
+  - @xyflow/system@0.0.37
+
+## 12.0.2
+
+### Patch Changes
+
+- [#4446](https://github.com/xyflow/xyflow/pull/4446) [`80baf53b`](https://github.com/xyflow/xyflow/commit/80baf53bdc7d4fb0715e5eed85efdea77191935a) Thanks [@moklick](https://github.com/moklick)! - fix(resizer): export types
+
+- [#4450](https://github.com/xyflow/xyflow/pull/4450) [`18a12661`](https://github.com/xyflow/xyflow/commit/18a1266131e7c2bdd9a15268dbf871cdf17cad9a) Thanks [@moklick](https://github.com/moklick)! - fix(selection): dont trigger onSelectionEnd on click
+
+- [#4451](https://github.com/xyflow/xyflow/pull/4451) [`4cccd06a`](https://github.com/xyflow/xyflow/commit/4cccd06a671e9ef1c6f16ab0d788081f8d894d0e) Thanks [@moklick](https://github.com/moklick)! - add nodeClickDistance
+
+- Updated dependencies [[`80baf53b`](https://github.com/xyflow/xyflow/commit/80baf53bdc7d4fb0715e5eed85efdea77191935a), [`4cccd06a`](https://github.com/xyflow/xyflow/commit/4cccd06a671e9ef1c6f16ab0d788081f8d894d0e)]:
+  - @xyflow/system@0.0.36
+
+## 12.0.1
+
+### Patch Changes
+
+- [#4434](https://github.com/xyflow/xyflow/pull/4434) [`1bda2451`](https://github.com/xyflow/xyflow/commit/1bda24519658b4aaed6d4abf9e7e9d096e193b5b) Thanks [@moklick](https://github.com/moklick)! - fix(selection): handle pointer capture for selectionOnDrag
+
+- [#4432](https://github.com/xyflow/xyflow/pull/4432) [`d2da5765`](https://github.com/xyflow/xyflow/commit/d2da576591305873f8d6514091ee8db1ad4f79e2) Thanks [@moklick](https://github.com/moklick)! - refactor(useConnection): return internal node, add node generic
+
+- Updated dependencies [[`d2da5765`](https://github.com/xyflow/xyflow/commit/d2da576591305873f8d6514091ee8db1ad4f79e2)]:
+  - @xyflow/system@0.0.35
+
+## 12.0.0
+
+React Flow 12 is finally out! With a new package name `@xyflow/react`!
+
+### Main features
+
+- **SSR / SSG**: you can define `width`, `height` and `handles` for the nodes. This makes it possible to render a flow on the server and hydrate on the client: [SSR guide](http://reactflow.dev/learn/advanced-use/ssr-ssg-configuration)
+  - Details: In v11, `width` and `height` were set by the library as soon as the nodes got measured. This still happens, but we are now using `measured.width` and `measured.height` to store this information. In the previous versions there was always a lot of confusion about `width` and `height`. It’s hard to understand, that you can’t use it for passing an actual width or height. It’s also not obvious that those attributes get added by the library. We think that the new implementation solves both of the problems: `width` and `height` are optional attributes that can be used to define dimensions and the measured dimensions are stored in `measured`.
+- **Reactive Flows:** The new hooks `useHandleConnections` and `useNodesData` and the new `updateNode` and `updateNodeData` functions can be used for managing the data flow between your nodes: [computing flows guide](http://reactflow.dev/learn/advanced-use/computing-flows)
+  - Details: Working with reactive flows is super common. You update node A and want to react on those changes in the connected node B. Until now everyone had to come up with a custom solution. With this version we want to change this and give you performant helpers to handle this. If you are excited about this, you can check out this example:
+- **Dark mode and css variables:** React Flow now comes with a built-in dark mode, that can be toggled by using the new `colorMode` prop (”light”, “dark” or “system”): [dark mode example](https://reactflow.dev/examples/styling/dark-mode)
+  - Details: With this version we want to make it easier to switch between dark and light modes and give you a better starting point for dark flows. If you pass colorMode=”dark”, we add the class name “dark” to the wrapper and use it to adjust the styling. To make the implementation for this new feature easier on our ends, we switched to CSS variables for most of the styles. These variables can also be used in user land to customize a flow.
+
+### More features and updates
+
+There is more! Besides the new main features, we added some minor things that were on our list for a long time. We also started to use TS docs for better docs. We already started to add some docs for some types and hooks which should improve the developer experience.
+
+- **[`useConnection` hook](https://reactflow.dev/api-reference/hooks/use-connection):** With this hook you can access the ongoing connection. For example, you can use it for colorizing handles styling a custom connection line based on the current start / end handles.
+- **Controlled `viewport`:** This is an advanced feature. Possible use cases are to animate the viewport or round the transform for lower res screens for example. This features brings two new props: [`viewport`](https://reactflow.dev/api-reference/react-flow#viewport) and [`onViewportChange`](https://reactflow.dev/api-reference/react-flow#on-viewport-change).
+- **[`ViewportPortal`](https://reactflow.dev/api-reference/components/viewport-portal) component:** This makes it possible to render elements in the viewport without the need to implement a custom node.
+- **[`onDelete`](https://reactflow.dev/api-reference/react-flow#on-delete) handler**: We added a combined handler for `onDeleteNodes` and `onDeleteEdges` to make it easier to react to deletions.
+- **[`onBeforeDelete`](https://reactflow.dev/api-reference/react-flow#on-before-delete) handler**: With this handler you can prevent/ manage deletions.
+- **[`isValidConnection`](https://reactflow.dev/api-reference/react-flow#is-valid-connection) prop:** This makes it possible to implement one validation function for all connections. It also gets called for programmatically added edges.
+- **[`autoPanSpeed`](https://reactflow.dev/api-reference/react-flow#autoPanSpeed) prop:** For controlling the speed while auto panning.
+- **Background component**: add [`patternClassName`](https://reactflow.dev/api-reference/components/background#pattern-class-name) prop to be able to style the background pattern by using a class name. This is useful if you want to style the background pattern with Tailwind for example.
+- **`onMove` callback** gets triggered for library-invoked viewport updates (like fitView or zoom-in)
+- **`deleteElements`** now returns deleted nodes and deleted edges
+- add **`origin` attribute** for nodes
+- add **`selectable` attribute** for edges
+- Node Resizer: child nodes don't move when the group is resized, extent and expand is recognized correctly
+- Correct types for `BezierEdge`, `StepEdge`, `SmoothStepEdge` and `StraightEdge` components
+- New edges created by the library only have `sourceHandle` and `targetHandle` attributes when those attributes are set. (We used to pass `sourceHandle: null` and `targetHandle: null`)
+- Edges do not mount/unmount when their z-index change
+- connection line knows about the target handle position so that the path is drawn correctly
+- `nodeDragThreshold` is 1 by default instead of 0
+- a better selection box usability (capture while dragging out of the flow)
+- add `selectable`, `deletable`, `draggable` and `parentId` to `NodeProps`
+- add a warning when styles not loaded
+
+## 12.0.0-next.28
+
+- add `paneDistanceClick` prop (max distance between mousedown/up that will trigger a click)
+- returned nodes in `onNodeDragStop` are set to `dragging=false`
+
+## 12.0.0-next.27
+
+- return Promises for `setViewport`, `fitView`, `fitBounds` and `zoomTo` to be able to await viewport update
+
+## 12.0.0-next.26
+
+- add `autoPanSpeed` prop
+
 ## 12.0.0-next.25
 
 - `useConnection` returns `ConnectionState` with `toNode` and `toHandle`
@@ -59,7 +150,7 @@
 - return user node in node event handlers
 - cleanup `useReactFlow`
 - export `KeyCode` and `Align` type
-- remove `Instance` in favour of `ReactFlowInstance` type 
+- remove `Instance` in favour of `ReactFlowInstance` type
 
 ## 12.0.0-next.16
 
@@ -97,7 +188,7 @@
 
 - rename `node.parentNode` to `node.parentId`
 - rename node.computed to node.measured
-- remove positionAbsolute from `node.computed` 
+- remove positionAbsolute from `node.computed`
 
 ## Minor Changes
 

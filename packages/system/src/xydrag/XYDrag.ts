@@ -61,6 +61,7 @@ type StoreItems<OnNodeDrag> = {
   onSelectionDrag?: OnSelectionDrag;
   onSelectionDragStop?: OnSelectionDrag;
   updateNodePositions: UpdateNodePositions;
+  autoPanSpeed?: number;
 };
 
 export type XYDragParams<OnNodeDrag> = {
@@ -69,6 +70,7 @@ export type XYDragParams<OnNodeDrag> = {
   onDrag?: OnDrag;
   onDragStop?: OnDrag;
   onNodeMouseDown?: (id: string) => void;
+  autoPanSpeed?: number;
 };
 
 export type XYDragInstance = {
@@ -82,6 +84,7 @@ export type DragUpdateParams = {
   isSelectable?: boolean;
   nodeId?: string;
   domNode: Element;
+  nodeClickDistance?: number;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,7 +106,14 @@ export function XYDrag<OnNodeDrag extends (e: any, nodes: any, node: any) => voi
   let abortDrag = false; // prevents unintentional dragging on multitouch
 
   // public functions
-  function update({ noDragClassName, handleSelector, domNode, isSelectable, nodeId }: DragUpdateParams) {
+  function update({
+    noDragClassName,
+    handleSelector,
+    domNode,
+    isSelectable,
+    nodeId,
+    nodeClickDistance = 0,
+  }: DragUpdateParams) {
     d3Selection = select(domNode);
     function updateNodes({ x, y }: XYPosition, dragEvent: MouseEvent | null) {
       const {
@@ -193,23 +203,24 @@ export function XYDrag<OnNodeDrag extends (e: any, nodes: any, node: any) => voi
       }
     }
 
-    function autoPan() {
+    async function autoPan() {
       if (!containerBounds) {
         return;
       }
 
-      const [xMovement, yMovement] = calcAutoPan(mousePosition, containerBounds);
+      const { transform, panBy, autoPanSpeed } = getStoreItems();
+
+      const [xMovement, yMovement] = calcAutoPan(mousePosition, containerBounds, autoPanSpeed);
 
       if (xMovement !== 0 || yMovement !== 0) {
-        const { transform, panBy } = getStoreItems();
-
         lastPos.x = (lastPos.x ?? 0) - xMovement / transform[2];
         lastPos.y = (lastPos.y ?? 0) - yMovement / transform[2];
 
-        if (panBy({ x: xMovement, y: yMovement })) {
+        if (await panBy({ x: xMovement, y: yMovement })) {
           updateNodes(lastPos as XYPosition, null);
         }
       }
+
       autoPanId = requestAnimationFrame(autoPan);
     }
 
@@ -261,6 +272,7 @@ export function XYDrag<OnNodeDrag extends (e: any, nodes: any, node: any) => voi
     }
 
     const d3DragInstance = drag()
+      .clickDistance(nodeClickDistance)
       .on('start', (event: UseDragEvent) => {
         const { domNode, nodeDragThreshold, transform, snapGrid, snapToGrid } = getStoreItems();
 
@@ -329,6 +341,7 @@ export function XYDrag<OnNodeDrag extends (e: any, nodes: any, node: any) => voi
               nodeId,
               dragItems,
               nodeLookup,
+              dragging: false,
             });
 
             onDragStop?.(event.sourceEvent as MouseEvent, dragItems, currentNode, currentNodes);

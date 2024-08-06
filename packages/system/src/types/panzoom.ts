@@ -9,6 +9,7 @@ export type PanZoomParams = {
   domNode: Element;
   minZoom: number;
   maxZoom: number;
+  paneClickDistance: number;
   viewport: Viewport;
   translateExtent: CoordinateExtent;
   onTransformChange: OnTransformChange;
@@ -45,15 +46,16 @@ export type PanZoomInstance = {
   update: (params: PanZoomUpdateOptions) => void;
   destroy: () => void;
   getViewport: () => Viewport;
-  setViewport: (viewport: Viewport, options?: PanZoomTransformOptions) => ZoomTransform | undefined;
+  setViewport: (viewport: Viewport, options?: PanZoomTransformOptions) => Promise<ZoomTransform | undefined>;
   setViewportConstrained: (
     viewport: Viewport,
     extent: CoordinateExtent,
     translateExtent: CoordinateExtent
-  ) => ZoomTransform | undefined;
+  ) => Promise<ZoomTransform | undefined>;
   setScaleExtent: (scaleExtent: [number, number]) => void;
   setTranslateExtent: (translateExtent: CoordinateExtent) => void;
-  scaleTo: (scale: number, options?: PanZoomTransformOptions) => void;
-  scaleBy: (factor: number, options?: PanZoomTransformOptions) => void;
+  scaleTo: (scale: number, options?: PanZoomTransformOptions) => Promise<boolean>;
+  scaleBy: (factor: number, options?: PanZoomTransformOptions) => Promise<boolean>;
   syncViewport: (viewport: Viewport) => void;
+  setClickDistance: (distance: number) => void;
 };

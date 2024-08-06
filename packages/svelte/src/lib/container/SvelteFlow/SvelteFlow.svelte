@@ -79,6 +79,8 @@
   export let onbeforedelete: $$Props['onbeforedelete'] = undefined;
   export let oninit: $$Props['oninit'] = undefined;
   export let nodeOrigin: $$Props['nodeOrigin'] = undefined;
+  export let paneClickDistance: $$Props['paneClickDistance'] = 0;
+  export let nodeClickDistance: $$Props['nodeClickDistance'] = 0;
 
   export let defaultMarkerColor = '#b1b1b7';
 
@@ -125,7 +127,8 @@
       edgeTypes,
       minZoom,
       maxZoom,
-      translateExtent
+      translateExtent,
+      paneClickDistance
     });
 
     return () => {
@@ -188,7 +191,8 @@
     edgeTypes,
     minZoom,
     maxZoom,
-    translateExtent
+    translateExtent,
+    paneClickDistance
   });
 
   $: colorModeClass = useColorModeClass(colorMode);
@@ -225,6 +229,7 @@
     zoomOnPinch={zoomOnPinch === undefined ? true : zoomOnPinch}
     panOnScroll={panOnScroll === undefined ? false : panOnScroll}
     panOnDrag={panOnDrag === undefined ? true : panOnDrag}
+    paneClickDistance={paneClickDistance === undefined ? 0 : paneClickDistance}
   >
     <Pane
       on:paneclick
@@ -250,6 +255,7 @@
         <div class="svelte-flow__edgelabel-renderer" />
         <div class="svelte-flow__viewport-portal" />
         <NodeRenderer
+          {nodeClickDistance}
           on:nodeclick
           on:nodemouseenter
           on:nodemousemove

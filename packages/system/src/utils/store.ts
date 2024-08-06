@@ -80,7 +80,8 @@ export function adoptUserNodes<NodeType extends NodeBase>(
         },
         internals: {
           positionAbsolute: getNodePositionWithOrigin(userNode, _options.nodeOrigin),
-          handleBounds: internalNode?.internals.handleBounds,
+          // if user re-initializes the node or removes `measured` for whatever reason, we reset the handleBounds so that the node gets re-measured
+          handleBounds: !userNode.measured ? undefined : internalNode?.internals.handleBounds,
           z: calculateZ(userNode, selectedNodeZ),
           userNode,
         },
@@ -104,8 +105,12 @@ function updateChildPosition<NodeType extends NodeBase>(
 
   const parentId = node.parentId!;
   const parentNode = nodeLookup.get(parentId);
+
   if (!parentNode) {
-    throw new Error(`Parent node ${parentId} not found`);
+    console.warn(
+      `Parent node ${parentId} not found. Please make sure that parent nodes are in front of their child nodes in the nodes array.`
+    );
+    return;
   }
 
   // update the parentLookup
@@ -325,7 +330,7 @@ export function updateNodeInternals<NodeType extends InternalNodeBase>(
   return { changes, updatedInternals };
 }
 
-export function panBy({
+export async function panBy({
   delta,
   panZoom,
   transform,
@@ -339,12 +344,12 @@ export function panBy({
   translateExtent: CoordinateExtent;
   width: number;
   height: number;
-}) {
+}): Promise<boolean> {
   if (!panZoom || (!delta.x && !delta.y)) {
-    return false;
+    return Promise.resolve(false);
   }
 
-  const nextViewport = panZoom.setViewportConstrained(
+  const nextViewport = await panZoom.setViewportConstrained(
     {
       x: transform[0] + delta.x,
       y: transform[1] + delta.y,
@@ -361,7 +366,7 @@ export function panBy({
     !!nextViewport &&
     (nextViewport.x !== transform[0] || nextViewport.y !== transform[1] || nextViewport.k !== transform[2]);
 
-  return transformChanged;
+  return Promise.resolve(transformChanged);
 }
 
 export function updateConnectionLookup(connectionLookup: ConnectionLookup, edgeLookup: EdgeLookup, edges: EdgeBase[]) {
