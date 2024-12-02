@@ -134,6 +134,14 @@ export type SvelteFlowProps = DOMAttributes<HTMLDivElement> & {
    * @default 1
    */
   nodeDragThreshold?: number;
+  /** Distance that the mouse can move between mousedown/up that will trigger a click
+   * @default 0
+   */
+  paneClickDistance?: number;
+  /** Distance that the mouse can move between mousedown/up that will trigger a click
+   * @default 0
+   */
+  nodeClickDistance?: number;
   /** Minimum zoom level
    * @default 0.5
    */
@@ -198,6 +206,12 @@ export type SvelteFlowProps = DOMAttributes<HTMLDivElement> & {
    * @example [[-1000, -10000], [1000, 1000]]
    */
   translateExtent?: CoordinateExtent;
+  /** By default the nodes can be placed anywhere. You can use this prop to set a boundary.
+   *
+   * The first pair of coordinates is the top left boundary and the second pair is the bottom right.
+   * @example [[-1000, -10000], [1000, 1000]]
+   */
+  nodeExtent?: CoordinateExtent;
   /** Disabling this prop will allow the user to scroll the page even when their pointer is over the flow.
    * @default true
    */

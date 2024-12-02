@@ -118,26 +118,47 @@ export const getNodePositionWithOrigin = (node: NodeBase, nodeOrigin: NodeOrigin
   };
 };
 
-export type GetNodesBoundsParams = {
+export type GetNodesBoundsParams<NodeType extends NodeBase = NodeBase> = {
   nodeOrigin?: NodeOrigin;
+  nodeLookup?: NodeLookup<InternalNodeBase<NodeType>>;
 };
 
 /**
- * Determines a bounding box that contains all given nodes in an array
+ * Internal function for determining a bounding box that contains all given nodes in an array.
  * @public
  * @remarks Useful when combined with {@link getViewportForBounds} to calculate the correct transform to fit the given nodes in a viewport.
  * @param nodes - Nodes to calculate the bounds for
  * @param params.nodeOrigin - Origin of the nodes: [0, 0] - top left, [0.5, 0.5] - center
  * @returns Bounding box enclosing all nodes
  */
-export const getNodesBounds = (nodes: NodeBase[], params: GetNodesBoundsParams = { nodeOrigin: [0, 0] }): Rect => {
+export const getNodesBounds = <NodeType extends NodeBase = NodeBase>(
+  nodes: (NodeType | InternalNodeBase<NodeType> | string)[],
+  params: GetNodesBoundsParams<NodeType> = { nodeOrigin: [0, 0], nodeLookup: undefined }
+): Rect => {
+  if (process.env.NODE_ENV === 'development' && !params.nodeLookup) {
+    console.warn(
+      'Please use `getNodesBounds` from `useReactFlow`/`useSvelteFlow` hook to ensure correct values for sub flows. If not possible, you have to provide a nodeLookup to support sub flows.'
+    );
+  }
+
   if (nodes.length === 0) {
     return { x: 0, y: 0, width: 0, height: 0 };
   }
 
   const box = nodes.reduce(
-    (currBox, node) => {
-      const nodeBox = nodeToBox(node, params.nodeOrigin);
+    (currBox, nodeOrId) => {
+      const isId = typeof nodeOrId === 'string';
+      let currentNode = !params.nodeLookup && !isId ? nodeOrId : undefined;
+
+      if (params.nodeLookup) {
+        currentNode = isId
+          ? params.nodeLookup.get(nodeOrId)
+          : !isInternalNodeBase(nodeOrId)
+          ? params.nodeLookup.get(nodeOrId.id)
+          : nodeOrId;
+      }
+
+      const nodeBox = currentNode ? nodeToBox(currentNode, params.nodeOrigin) : { x: 0, y: 0, x2: 0, y2: 0 };
       return getBoundsOfBoxes(currBox, nodeBox);
     },
     { x: Infinity, y: Infinity, x2: -Infinity, y2: -Infinity }
@@ -191,21 +212,22 @@ export const getNodesInside = <NodeType extends NodeBase = NodeBase>(
 
   const visibleNodes: InternalNodeBase<NodeType>[] = [];
 
-  for (const [, node] of nodes) {
+  for (const node of nodes.values()) {
     const { measured, selectable = true, hidden = false } = node;
-    const width = measured.width ?? node.width ?? node.initialWidth ?? null;
-    const height = measured.height ?? node.height ?? node.initialHeight ?? null;
 
     if ((excludeNonSelectableNodes && !selectable) || hidden) {
       continue;
     }
 
+    const width = measured.width ?? node.width ?? node.initialWidth ?? null;
+    const height = measured.height ?? node.height ?? node.initialHeight ?? null;
+
     const overlappingArea = getOverlappingArea(paneRect, nodeToRect(node));
-    const notInitialized = width === null || height === null;
+    const area = (width ?? 0) * (height ?? 0);
 
     const partiallyVisible = partially && overlappingArea > 0;
-    const area = (width ?? 0) * (height ?? 0);
-    const isVisible = notInitialized || partiallyVisible || overlappingArea >= area;
+    const forceInitialRender = !node.internals.handleBounds;
+    const isVisible = forceInitialRender || partiallyVisible || overlappingArea >= area;
 
     if (isVisible || node.dragging) {
       visibleNodes.push(node);
@@ -233,57 +255,46 @@ export const getConnectedEdges = <NodeType extends NodeBase = NodeBase, EdgeType
   return edges.filter((edge) => nodeIds.has(edge.source) || nodeIds.has(edge.target));
 };
 
-export function fitView<Params extends FitViewParamsBase<NodeBase>, Options extends FitViewOptionsBase<NodeBase>>(
-  { nodeLookup, width, height, panZoom, minZoom, maxZoom }: Params,
-  options?: Options
-) {
-  const filteredNodes: Map<string, InternalNodeBase> = new Map();
+export function getFitViewNodes<
+  Params extends NodeLookup<InternalNodeBase<NodeBase>>,
+  Options extends FitViewOptionsBase<NodeBase>
+>(nodeLookup: Params, options?: Pick<Options, 'nodes' | 'includeHiddenNodes'>) {
+  const fitViewNodes: NodeLookup = new Map();
   const optionNodeIds = options?.nodes ? new Set(options.nodes.map((node) => node.id)) : null;
 
   nodeLookup.forEach((n) => {
     const isVisible = n.measured.width && n.measured.height && (options?.includeHiddenNodes || !n.hidden);
 
     if (isVisible && (!optionNodeIds || optionNodeIds.has(n.id))) {
-      filteredNodes.set(n.id, n);
+      fitViewNodes.set(n.id, n);
     }
   });
 
-  if (filteredNodes.size > 0) {
-    const bounds = getInternalNodesBounds(filteredNodes);
-
-    const viewport = getViewportForBounds(
-      bounds,
-      width,
-      height,
-      options?.minZoom ?? minZoom,
-      options?.maxZoom ?? maxZoom,
-      options?.padding ?? 0.1
-    );
-
-    panZoom.setViewport(viewport, { duration: options?.duration });
-
-    return true;
-  }
-
-  return false;
+  return fitViewNodes;
 }
 
-/**
- * This function clamps the passed extend by the node's width and height.
- * This is needed to prevent the node from being dragged outside of its extent.
- *
- * @param node
- * @param extent
- * @returns
- */
-function clampNodeExtent<NodeType extends NodeBase>(
-  node: NodeType,
-  extent?: CoordinateExtent | 'parent'
-): CoordinateExtent | 'parent' | undefined {
-  if (!extent || extent === 'parent') {
-    return extent;
+export async function fitView<Params extends FitViewParamsBase<NodeBase>, Options extends FitViewOptionsBase<NodeBase>>(
+  { nodes, width, height, panZoom, minZoom, maxZoom }: Params,
+  options?: Omit<Options, 'nodes' | 'includeHiddenNodes'>
+): Promise<boolean> {
+  if (nodes.size === 0) {
+    return Promise.resolve(false);
   }
-  return [extent[0], [extent[1][0] - (node.measured?.width ?? 0), extent[1][1] - (node.measured?.height ?? 0)]];
+
+  const bounds = getInternalNodesBounds(nodes);
+
+  const viewport = getViewportForBounds(
+    bounds,
+    width,
+    height,
+    options?.minZoom ?? minZoom,
+    options?.maxZoom ?? maxZoom,
+    options?.padding ?? 0.1
+  );
+
+  await panZoom.setViewport(viewport, { duration: options?.duration });
+
+  return Promise.resolve(true);
 }
 
 /**
@@ -310,40 +321,37 @@ export function calculateNodePosition<NodeType extends NodeBase>({
   const node = nodeLookup.get(nodeId)!;
   const parentNode = node.parentId ? nodeLookup.get(node.parentId) : undefined;
   const { x: parentX, y: parentY } = parentNode ? parentNode.internals.positionAbsolute : { x: 0, y: 0 };
-  const origin = node.origin ?? nodeOrigin;
 
-  let currentExtent = clampNodeExtent(node, node.extent || nodeExtent);
+  const origin = node.origin ?? nodeOrigin;
+  let extent = nodeExtent;
 
   if (node.extent === 'parent' && !node.expandParent) {
     if (!parentNode) {
       onError?.('005', errorMessages['error005']());
     } else {
-      const nodeWidth = node.measured.width;
-      const nodeHeight = node.measured.height;
       const parentWidth = parentNode.measured.width;
       const parentHeight = parentNode.measured.height;
 
-      if (nodeWidth && nodeHeight && parentWidth && parentHeight) {
-        currentExtent = [
+      if (parentWidth && parentHeight) {
+        extent = [
           [parentX, parentY],
-          [parentX + parentWidth - nodeWidth, parentY + parentHeight - nodeHeight],
+          [parentX + parentWidth, parentY + parentHeight],
         ];
       }
     }
   } else if (parentNode && isCoordinateExtent(node.extent)) {
-    currentExtent = [
+    extent = [
       [node.extent[0][0] + parentX, node.extent[0][1] + parentY],
       [node.extent[1][0] + parentX, node.extent[1][1] + parentY],
     ];
   }
 
-  const positionAbsolute = isCoordinateExtent(currentExtent)
-    ? clampPosition(nextPosition, currentExtent)
+  const positionAbsolute = isCoordinateExtent(extent)
+    ? clampPosition(nextPosition, extent, node.measured)
     : nextPosition;
 
   return {
     position: {
-      // TODO: is there a better way to do this?
       x: positionAbsolute.x - parentX + node.measured.width! * origin[0],
       y: positionAbsolute.y - parentY + node.measured.height! * origin[1],
     },

@@ -103,6 +103,8 @@ function ReactFlow<NodeType extends Node = Node, EdgeType extends Edge = Edge>(
     onPaneMouseLeave,
     onPaneScroll,
     onPaneContextMenu,
+    paneClickDistance = 0,
+    nodeClickDistance = 0,
     children,
     onReconnect,
     onReconnectStart,
@@ -129,6 +131,7 @@ function ReactFlow<NodeType extends Node = Node, EdgeType extends Edge = Edge>(
     disableKeyboardA11y = false,
     autoPanOnConnect,
     autoPanOnNodeDrag,
+    autoPanSpeed,
     connectionRadius,
     isValidConnection,
     onError,
@@ -150,14 +153,22 @@ function ReactFlow<NodeType extends Node = Node, EdgeType extends Edge = Edge>(
 
   return (
     <div
+      data-testid="rf__wrapper"
       {...rest}
       style={{ ...style, ...wrapperStyle }}
       ref={ref}
       className={cc(['react-flow', className, colorModeClassName])}
-      data-testid="rf__wrapper"
       id={id}
     >
-      <Wrapper nodes={nodes} edges={edges} width={width} height={height} fitView={fitView} nodeOrigin={nodeOrigin}>
+      <Wrapper
+        nodes={nodes}
+        edges={edges}
+        width={width}
+        height={height}
+        fitView={fitView}
+        nodeOrigin={nodeOrigin}
+        nodeExtent={nodeExtent}
+      >
         <GraphView<NodeType, EdgeType>
           onInit={onInit}
           onNodeClick={onNodeClick}
@@ -199,6 +210,8 @@ function ReactFlow<NodeType extends Node = Node, EdgeType extends Edge = Edge>(
           onPaneMouseLeave={onPaneMouseLeave}
           onPaneScroll={onPaneScroll}
           onPaneContextMenu={onPaneContextMenu}
+          paneClickDistance={paneClickDistance}
+          nodeClickDistance={nodeClickDistance}
           onSelectionContextMenu={onSelectionContextMenu}
           onSelectionStart={onSelectionStart}
           onSelectionEnd={onSelectionEnd}
@@ -269,12 +282,14 @@ function ReactFlow<NodeType extends Node = Node, EdgeType extends Edge = Edge>(
           rfId={rfId}
           autoPanOnConnect={autoPanOnConnect}
           autoPanOnNodeDrag={autoPanOnNodeDrag}
+          autoPanSpeed={autoPanSpeed}
           onError={onError}
           connectionRadius={connectionRadius}
           isValidConnection={isValidConnection}
           selectNodesOnDrag={selectNodesOnDrag}
           nodeDragThreshold={nodeDragThreshold}
           onBeforeDelete={onBeforeDelete}
+          paneClickDistance={paneClickDistance}
           debug={debug}
         />
         <SelectionListener onSelectionChange={onSelectionChange} />

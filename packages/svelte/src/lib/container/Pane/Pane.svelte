@@ -92,7 +92,6 @@
 
   function onPointerDown(event: PointerEvent) {
     containerBounds = container.getBoundingClientRect();
-    container.setPointerCapture(event.pointerId);
 
     if (
       !elementsSelectable ||
@@ -103,6 +102,8 @@
     ) {
       return;
     }
+
+    (event.target as Element)?.setPointerCapture?.(event.pointerId);
 
     const { x, y } = getEventPosition(event, containerBounds);
 
@@ -174,7 +175,7 @@
       return;
     }
 
-    container.releasePointerCapture(event.pointerId);
+    (event.target as Element)?.releasePointerCapture?.(event.pointerId);
 
     // We only want to trigger click functions when in selection mode if
     // the user did not move the mouse.
@@ -211,7 +212,7 @@
 <div
   bind:this={container}
   class="svelte-flow__pane"
-  class:draggable={panOnDrag}
+  class:draggable={panOnDrag === true || (Array.isArray(panOnDrag) && panOnDrag.includes(0))}
   class:dragging={$dragging}
   class:selection={isSelecting}
   on:click={hasActiveSelection ? undefined : wrapHandler(onClick, container)}

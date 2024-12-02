@@ -1,6 +1,7 @@
 import Basic from '../examples/Basic';
 import Backgrounds from '../examples/Backgrounds';
 import ColorMode from '../examples/ColorMode';
+import ClickDistance from '../examples/ClickDistance';
 import ControlledUncontrolled from '../examples/ControlledUncontrolled';
 import ControlledViewport from '../examples/ControlledViewport';
 import CustomConnectionLine from '../examples/CustomConnectionLine';
@@ -52,6 +53,7 @@ import UseHandleConnections from '../examples/UseHandleConnections';
 import AddNodeOnEdgeDrop from '../examples/AddNodeOnEdgeDrop';
 import DevTools from '../examples/DevTools';
 import Redux from '../examples/Redux';
+import MovingHandles from '../examples/MovingHandles';
 
 export interface IRoute {
   name: string;
@@ -84,6 +86,11 @@ const routes: IRoute[] = [
     name: 'Cancel Connection',
     path: 'cancel-connection',
     component: CancelConnection,
+  },
+  {
+    name: 'Click Distance',
+    path: 'click-distance',
+    component: ClickDistance,
   },
   {
     name: 'Controlled/Uncontrolled',
@@ -199,6 +206,11 @@ const routes: IRoute[] = [
     name: 'Multi setNodes',
     path: 'multi-setnodes',
     component: MultiSetNodes,
+  },
+  {
+    name: 'Moving Handles',
+    path: 'moving-handles',
+    component: MovingHandles,
   },
   {
     name: 'Multi Flows',

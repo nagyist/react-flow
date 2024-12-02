@@ -18,7 +18,10 @@ import {
   type CoordinateExtent,
   type UpdateConnection,
   type ConnectionState,
-  type NodeOrigin
+  type NodeOrigin,
+  getFitViewNodes,
+  updateAbsolutePositions,
+  getDimensions
 } from '@xyflow/system';
 
 import type { EdgeTypes, NodeTypes, Node, Edge, FitViewOptions } from '$lib/types';
@@ -36,7 +39,8 @@ export function createStore({
   width,
   height,
   fitView: fitViewOnCreate,
-  nodeOrigin
+  nodeOrigin,
+  nodeExtent
 }: {
   nodes?: Node[];
   edges?: Edge[];
@@ -44,6 +48,7 @@ export function createStore({
   height?: number;
   fitView?: boolean;
   nodeOrigin?: NodeOrigin;
+  nodeExtent?: CoordinateExtent;
 }): SvelteFlowStore {
   const store = getInitialStore({
     nodes,
@@ -51,7 +56,8 @@ export function createStore({
     width,
     height,
     fitView: fitViewOnCreate,
-    nodeOrigin
+    nodeOrigin,
+    nodeExtent
   });
 
   function setNodeTypes(nodeTypes: NodeTypes) {
@@ -92,6 +98,7 @@ export function createStore({
 
   function updateNodeInternals(updates: Map<string, InternalNodeUpdate>) {
     const nodeLookup = get(store.nodeLookup);
+    const parentLookup = get(store.parentLookup);
     const { changes, updatedInternals } = updateNodeInternalsSystem(
       updates,
       nodeLookup,
@@ -104,9 +111,11 @@ export function createStore({
       return;
     }
 
+    updateAbsolutePositions(nodeLookup, parentLookup, { nodeOrigin, nodeExtent });
+
     if (!get(store.fitViewOnInitDone) && get(store.fitViewOnInit)) {
       const fitViewOptions = get(store.fitViewOptions);
-      const fitViewOnInitDone = fitView({
+      const fitViewOnInitDone = fitViewSync({
         ...fitViewOptions,
         nodes: fitViewOptions?.nodes
       });
@@ -148,16 +157,21 @@ export function createStore({
 
   function fitView(options?: FitViewOptions) {
     const panZoom = get(store.panZoom);
+    const domNode = get(store.domNode);
 
-    if (!panZoom) {
-      return false;
+    if (!panZoom || !domNode) {
+      return Promise.resolve(false);
     }
+
+    const { width, height } = getDimensions(domNode);
+
+    const fitViewNodes = getFitViewNodes(get(store.nodeLookup), options);
 
     return fitViewSystem(
       {
-        nodeLookup: get(store.nodeLookup),
-        width: get(store.width),
-        height: get(store.height),
+        nodes: fitViewNodes,
+        width,
+        height,
         minZoom: get(store.minZoom),
         maxZoom: get(store.maxZoom),
         panZoom
@@ -166,20 +180,45 @@ export function createStore({
     );
   }
 
-  function zoomBy(factor: number, options?: ViewportHelperFunctionOptions) {
+  function fitViewSync(options?: FitViewOptions) {
     const panZoom = get(store.panZoom);
 
-    if (panZoom) {
-      panZoom.scaleBy(factor, options);
+    if (!panZoom) {
+      return false;
     }
+
+    const fitViewNodes = getFitViewNodes(get(store.nodeLookup), options);
+
+    fitViewSystem(
+      {
+        nodes: fitViewNodes,
+        width: get(store.width),
+        height: get(store.height),
+        minZoom: get(store.minZoom),
+        maxZoom: get(store.maxZoom),
+        panZoom
+      },
+      options
+    );
+
+    return fitViewNodes.size > 0;
+  }
+
+  function zoomBy(factor: number, options?: ViewportHelperFunctionOptions) {
+    const panZoom = get(store.panZoom);
+    if (!panZoom) {
+      return Promise.resolve(false);
+    }
+
+    return panZoom.scaleBy(factor, options);
   }
 
   function zoomIn(options?: ViewportHelperFunctionOptions) {
-    zoomBy(1.2, options);
+    return zoomBy(1.2, options);
   }
 
   function zoomOut(options?: ViewportHelperFunctionOptions) {
-    zoomBy(1 / 1.2, options);
+    return zoomBy(1 / 1.2, options);
   }
 
   function setMinZoom(minZoom: number) {
@@ -218,6 +257,10 @@ export function createStore({
       }
     });
     return elementsChanged;
+  }
+
+  function setPaneClickDistance(distance: number) {
+    get(store.panZoom)?.setClickDistance(distance);
   }
 
   function unselectNodesAndEdges(params?: { nodes?: Node[]; edges?: Edge[] }) {
@@ -420,6 +463,7 @@ export function createStore({
     setMinZoom,
     setMaxZoom,
     setTranslateExtent,
+    setPaneClickDistance,
     unselectNodesAndEdges,
     addSelectedNodes,
     addSelectedEdges,
@@ -449,7 +493,8 @@ export function createStoreContext({
   width,
   height,
   fitView,
-  nodeOrigin
+  nodeOrigin,
+  nodeExtent
 }: {
   nodes?: Node[];
   edges?: Edge[];
@@ -457,8 +502,9 @@ export function createStoreContext({
   height?: number;
   fitView?: boolean;
   nodeOrigin?: NodeOrigin;
+  nodeExtent?: CoordinateExtent;
 }) {
-  const store = createStore({ nodes, edges, width, height, fitView, nodeOrigin });
+  const store = createStore({ nodes, edges, width, height, fitView, nodeOrigin, nodeExtent });
 
   setContext(key, {
     getStore: () => store

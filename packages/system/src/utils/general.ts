@@ -16,10 +16,32 @@ import { getNodePositionWithOrigin, isInternalNodeBase } from './graph';
 
 export const clamp = (val: number, min = 0, max = 1): number => Math.min(Math.max(val, min), max);
 
-export const clampPosition = (position: XYPosition = { x: 0, y: 0 }, extent: CoordinateExtent) => ({
-  x: clamp(position.x, extent[0][0], extent[1][0]),
-  y: clamp(position.y, extent[0][1], extent[1][1]),
+export const clampPosition = (
+  position: XYPosition = { x: 0, y: 0 },
+  extent: CoordinateExtent,
+  dimensions: Partial<Dimensions>
+) => ({
+  x: clamp(position.x, extent[0][0], extent[1][0] - (dimensions?.width ?? 0)),
+  y: clamp(position.y, extent[0][1], extent[1][1] - (dimensions?.height ?? 0)),
 });
+
+export function clampPositionToParent<NodeType extends NodeBase>(
+  childPosition: XYPosition,
+  childDimensions: Dimensions,
+  parent: InternalNodeBase<NodeType>
+) {
+  const { width: parentWidth, height: parentHeight } = getNodeDimensions(parent);
+  const { x: parentX, y: parentY } = parent.internals.positionAbsolute;
+
+  return clampPosition(
+    childPosition,
+    [
+      [parentX, parentY],
+      [parentX + parentWidth, parentY + parentHeight],
+    ],
+    childDimensions
+  );
+}
 
 /**
  * Calculates the velocity of panning when the mouse is close to the edge of the canvas
@@ -31,17 +53,22 @@ export const clampPosition = (position: XYPosition = { x: 0, y: 0 }, extent: Coo
  */
 const calcAutoPanVelocity = (value: number, min: number, max: number): number => {
   if (value < min) {
-    return clamp(Math.abs(value - min), 1, 50) / 50;
+    return clamp(Math.abs(value - min), 1, min) / min;
   } else if (value > max) {
-    return -clamp(Math.abs(value - max), 1, 50) / 50;
+    return -clamp(Math.abs(value - max), 1, min) / min;
   }
 
   return 0;
 };
 
-export const calcAutoPan = (pos: XYPosition, bounds: Dimensions): number[] => {
-  const xMovement = calcAutoPanVelocity(pos.x, 35, bounds.width - 35) * 20;
-  const yMovement = calcAutoPanVelocity(pos.y, 35, bounds.height - 35) * 20;
+export const calcAutoPan = (
+  pos: XYPosition,
+  bounds: Dimensions,
+  speed: number = 15,
+  distance: number = 40
+): number[] => {
+  const xMovement = calcAutoPanVelocity(pos.x, distance, bounds.width - distance) * speed;
+  const yMovement = calcAutoPanVelocity(pos.y, distance, bounds.height - distance) * speed;
 
   return [xMovement, yMovement];
 };
@@ -225,18 +252,13 @@ export function evaluateAbsolutePosition(
   nodeLookup: NodeLookup,
   nodeOrigin: NodeOrigin
 ): XYPosition {
-  let nextParentId: string | undefined = parentId;
   const positionAbsolute = { ...position };
 
-  while (nextParentId) {
-    const parent = nodeLookup.get(nextParentId);
-    nextParentId = parent?.parentId;
-
-    if (parent) {
-      const origin = parent.origin || nodeOrigin;
-      positionAbsolute.x += parent.internals.positionAbsolute.x - (dimensions.width ?? 0) * origin[0];
-      positionAbsolute.y += parent.internals.positionAbsolute.y - (dimensions.height ?? 0) * origin[1];
-    }
+  const parent = nodeLookup.get(parentId);
+  if (parent) {
+    const origin = parent.origin || nodeOrigin;
+    positionAbsolute.x += parent.internals.positionAbsolute.x - (dimensions.width ?? 0) * origin[0];
+    positionAbsolute.y += parent.internals.positionAbsolute.y - (dimensions.height ?? 0) * origin[1];
   }
 
   return positionAbsolute;

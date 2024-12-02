@@ -223,6 +223,14 @@ export interface ReactFlowProps<NodeType extends Node = Node, EdgeType extends E
   onPaneMouseMove?: (event: ReactMouseEvent) => void;
   /** This event handler gets called when mouse leaves the pane */
   onPaneMouseLeave?: (event: ReactMouseEvent) => void;
+  /** Distance that the mouse can move between mousedown/up that will trigger a click
+   * @default 0
+   */
+  paneClickDistance?: number;
+  /** Distance that the mouse can move between mousedown/up that will trigger a click
+   * @default 0
+   */
+  nodeClickDistance?: number;
   /** This handler gets called before the user deletes nodes or edges and provides a way to abort the deletion by returning false. */
   onBeforeDelete?: OnBeforeDelete<NodeType, EdgeType>;
   /** Custom node types to be available in a flow.
@@ -471,6 +479,10 @@ export interface ReactFlowProps<NodeType extends Node = Node, EdgeType extends E
    * @default true
    */
   autoPanOnConnect?: boolean;
+  /** The speed at which the viewport pans while dragging a node or a selection box.
+   * @default 15
+   */
+  autoPanSpeed?: number;
   /** You can enable this prop to automatically pan the viewport while making a new connection.
    * @default true
    */
@@ -487,7 +499,7 @@ export interface ReactFlowProps<NodeType extends Node = Node, EdgeType extends E
    * If you have custom connection logic its preferred to use this callback over the isValidConnection prop on the handle component for performance reasons.
    * @default (connection: Connection) => true
    */
-  isValidConnection?: IsValidConnection;
+  isValidConnection?: IsValidConnection<EdgeType>;
   /** With a threshold greater than zero you can control the distinction between node drag and click events.
    *
    * If threshold equals 1, you need to drag the node 1 pixel before a drag event is fired.

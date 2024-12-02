@@ -53,6 +53,7 @@
   export let onMoveEnd: $$Props['onMoveEnd'] = undefined;
   export let isValidConnection: $$Props['isValidConnection'] = undefined;
   export let translateExtent: $$Props['translateExtent'] = undefined;
+  export let nodeExtent: $$Props['nodeExtent'] = undefined;
   export let onlyRenderVisibleElements: $$Props['onlyRenderVisibleElements'] = undefined;
   export let panOnScrollMode: $$Props['panOnScrollMode'] = PanOnScrollMode.Free;
   export let preventScrolling: $$Props['preventScrolling'] = true;
@@ -79,6 +80,8 @@
   export let onbeforedelete: $$Props['onbeforedelete'] = undefined;
   export let oninit: $$Props['oninit'] = undefined;
   export let nodeOrigin: $$Props['nodeOrigin'] = undefined;
+  export let paneClickDistance: $$Props['paneClickDistance'] = 0;
+  export let nodeClickDistance: $$Props['nodeClickDistance'] = 0;
 
   export let defaultMarkerColor = '#b1b1b7';
 
@@ -100,7 +103,8 @@
         width,
         height,
         fitView,
-        nodeOrigin
+        nodeOrigin,
+        nodeExtent
       });
 
   onMount(() => {
@@ -125,7 +129,8 @@
       edgeTypes,
       minZoom,
       maxZoom,
-      translateExtent
+      translateExtent,
+      paneClickDistance
     });
 
     return () => {
@@ -188,7 +193,8 @@
     edgeTypes,
     minZoom,
     maxZoom,
-    translateExtent
+    translateExtent,
+    paneClickDistance
   });
 
   $: colorModeClass = useColorModeClass(colorMode);
@@ -225,6 +231,7 @@
     zoomOnPinch={zoomOnPinch === undefined ? true : zoomOnPinch}
     panOnScroll={panOnScroll === undefined ? false : panOnScroll}
     panOnDrag={panOnDrag === undefined ? true : panOnDrag}
+    paneClickDistance={paneClickDistance === undefined ? 0 : paneClickDistance}
   >
     <Pane
       on:paneclick
@@ -250,6 +257,7 @@
         <div class="svelte-flow__edgelabel-renderer" />
         <div class="svelte-flow__viewport-portal" />
         <NodeRenderer
+          {nodeClickDistance}
           on:nodeclick
           on:nodemouseenter
           on:nodemousemove

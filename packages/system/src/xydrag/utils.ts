@@ -81,10 +81,12 @@ export function getEventHandlerParams<NodeType extends InternalNodeBase>({
   nodeId,
   dragItems,
   nodeLookup,
+  dragging = true,
 }: {
   nodeId?: string;
   dragItems: Map<string, NodeDragItem>;
   nodeLookup: Map<string, NodeType>;
+  dragging?: boolean;
 }): [NodeBase, NodeBase[]] {
   const nodesFromDragItems: NodeBase[] = [];
 
@@ -95,6 +97,7 @@ export function getEventHandlerParams<NodeType extends InternalNodeBase>({
       nodesFromDragItems.push({
         ...node,
         position: dragItem.position,
+        dragging,
       });
     }
   }
@@ -103,13 +106,16 @@ export function getEventHandlerParams<NodeType extends InternalNodeBase>({
     return [nodesFromDragItems[0], nodesFromDragItems];
   }
 
-  const node = nodeLookup.get(nodeId)!.internals.userNode;
+  const node = nodeLookup.get(nodeId)?.internals.userNode;
 
   return [
-    {
-      ...node,
-      position: dragItems.get(nodeId)?.position || node.position,
-    },
+    !node
+      ? nodesFromDragItems[0]
+      : {
+          ...node,
+          position: dragItems.get(nodeId)?.position || node.position,
+          dragging,
+        },
     nodesFromDragItems,
   ];
 }

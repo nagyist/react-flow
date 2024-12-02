@@ -3,6 +3,7 @@ import {
   EdgeRemoveChange,
   evaluateAbsolutePosition,
   getElementsToRemove,
+  getNodesBounds,
   getOverlappingArea,
   isRectObject,
   NodeRemoveChange,
@@ -230,6 +231,17 @@ export function useReactFlow<NodeType extends Node = Node, EdgeType extends Edge
           options
         );
       },
+      getNodesBounds: (nodes: (NodeType | InternalNode | string)[]): Rect => {
+        const { nodeLookup, nodeOrigin } = store.getState();
+        return getNodesBounds(nodes, { nodeLookup, nodeOrigin });
+      },
+      getHandleConnections: ({ type, id, nodeId }) =>
+        Array.from(
+          store
+            .getState()
+            .connectionLookup.get(`${nodeId}-${type}-${id ?? null}`)
+            ?.values() ?? []
+        ),
     };
   }, []);
 
